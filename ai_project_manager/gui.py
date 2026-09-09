@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import queue
 import subprocess
+import sys
 import threading
 import time
 import tkinter as tk
+from pathlib import Path
 from tkinter import messagebox, ttk
 
 from .models import Project, Session, Status, human_size
@@ -253,8 +255,15 @@ class App(tk.Tk):
                 target = proj.sessions[0].file
         else:
             target = rest[1].file
-        if target:
+        if not target:
+            return
+        if sys.platform == "darwin":
             subprocess.run(["open", "-R", str(target)], check=False)
+        elif sys.platform == "win32":
+            subprocess.run(["explorer", f"/select,{target}"], check=False)
+        else:
+            parent = target if Path(target).is_dir() else Path(target).parent
+            subprocess.run(["xdg-open", str(parent)], check=False)
 
     def delete_selected(self) -> None:
         sel = self.tree.selection()

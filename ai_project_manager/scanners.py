@@ -57,7 +57,9 @@ def _classify(real_path: str | None) -> Status:
         return Status.UNRESOLVED
     if Path(real_path).is_dir():
         return Status.OK
-    if "/Library/CloudStorage/" in real_path:
+    # A cloud-synced folder may be a valid path that just isn't hydrated locally:
+    # macOS puts these under ~/Library/CloudStorage/, Windows under OneDrive*\.
+    if "/Library/CloudStorage/" in real_path or "OneDrive" in real_path:
         return Status.CLOUD_UNAVAILABLE
     return Status.MISSING
 

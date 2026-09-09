@@ -1,6 +1,6 @@
 # AI Project Manager
 
-A zero-dependency Tkinter GUI for macOS that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash.
+A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash.
 
 ![AI Project Manager showing Claude and Codex projects with session names and missing-folder status](docs/screenshot.png)
 
@@ -10,7 +10,7 @@ A zero-dependency Tkinter GUI for macOS that lists your **Claude Code** (`~/.cla
 - Status per project: `✓ exists`, `✗ missing` (folder is gone), `☁ unavailable` (OneDrive/CloudStorage path not currently synced), `? unresolved`
 - Filters: source (Claude/Codex), status, "older than N days", and path search — combine with **Select All (Filtered)** for bulk cleanup (e.g. filter to *Missing only* → select all → delete)
 - Expand a project to delete individual sessions
-- Deletions go to the **macOS Trash** via Finder (with "Put Back" support); falls back to moving into `~/.Trash` if Finder automation is denied
+- Deletions go to the **macOS Trash** via Finder (with "Put Back" support; falls back to moving into `~/.Trash` if Finder automation is denied) or the **Windows Recycle Bin** via the shell API
 - Reveal a project or session file in Finder
 
 ## Correctness notes
@@ -23,6 +23,10 @@ A zero-dependency Tkinter GUI for macOS that lists your **Claude Code** (`~/.cla
 ## Installation
 
 Requires a Python with a modern Tk (8.6+). Avoid Apple's built-in `/usr/bin/python3` — its bundled Tk 8.5 draws a blank window on recent macOS in dark mode.
+
+### Windows
+
+Install Python from [python.org](https://www.python.org/downloads/) (tkinter is included), clone the repo, and run the same `python -m ai_project_manager` commands below. Deletions go to the Recycle Bin.
 
 ### From a fresh macOS install
 

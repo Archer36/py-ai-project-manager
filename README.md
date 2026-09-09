@@ -1,6 +1,6 @@
 # AI Project Manager
 
-A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash.
+A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash or Windows Recycle Bin.
 
 ![AI Project Manager showing Claude and Codex projects with session names and missing-folder status](docs/screenshot.png)
 

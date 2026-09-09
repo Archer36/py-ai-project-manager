@@ -11,10 +11,22 @@ from .models import Project, Session, Status
 CLAUDE_PROJECTS = Path.home() / ".claude" / "projects"
 CLAUDE_HISTORY = Path.home() / ".claude" / "history.jsonl"
 CODEX_SESSIONS = Path.home() / ".codex" / "sessions"
+CODEX_HISTORY = Path.home() / ".codex" / "history.jsonl"
 
 # How many leading lines of a Claude session file to scan for a "cwd" field
 # (the first records are headers carrying only type/sessionId).
 _CWD_SCAN_LINES = 25
+
+# How many leading lines to scan for the first real user prompt (session title).
+_TITLE_SCAN_LINES = 300
+_TITLE_MAX_LEN = 100
+
+
+def _clean_title(text: str) -> str:
+    text = " ".join(text.split())
+    if not text or text.startswith(("<", "/", "Caveat:", "[Request interrupted")):
+        return ""
+    return text[:_TITLE_MAX_LEN]
 
 
 def _dir_size(path: Path) -> int:
@@ -69,9 +81,44 @@ def _claude_cwd_from_session(jsonl: Path) -> str | None:
     return None
 
 
-def _history_path_map() -> dict[str, str]:
-    """Map Claude-encoded project dir name -> real path, from ~/.claude/history.jsonl."""
-    mapping: dict[str, str] = {}
+def _claude_title_from_session(jsonl: Path) -> str:
+    """First real user prompt from the leading records of a Claude session file."""
+    try:
+        with jsonl.open("r", encoding="utf-8", errors="replace") as f:
+            for _ in range(_TITLE_SCAN_LINES):
+                line = f.readline()
+                if not line:
+                    break
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if rec.get("type") != "user" or rec.get("isMeta") or rec.get("isSidechain"):
+                    continue
+                content = rec.get("message", {}).get("content")
+                if isinstance(content, str):
+                    text = content
+                elif isinstance(content, list):
+                    text = " ".join(
+                        part.get("text", "")
+                        for part in content
+                        if isinstance(part, dict) and part.get("type") == "text"
+                    )
+                else:
+                    continue
+                title = _clean_title(text)
+                if title:
+                    return title
+    except OSError:
+        pass
+    return ""
+
+
+def _claude_history_maps() -> tuple[dict[str, str], dict[str, str]]:
+    """From ~/.claude/history.jsonl: (encoded dir name -> real path,
+    sessionId -> first real prompt)."""
+    paths: dict[str, str] = {}
+    titles: dict[str, str] = {}
     try:
         with CLAUDE_HISTORY.open("r", encoding="utf-8", errors="replace") as f:
             for line in f:
@@ -81,17 +128,42 @@ def _history_path_map() -> dict[str, str]:
                     continue
                 proj = rec.get("project")
                 if proj:
-                    mapping[_encode_claude_path(proj)] = proj
+                    paths[_encode_claude_path(proj)] = proj
+                sid = rec.get("sessionId")
+                if sid and sid not in titles:
+                    title = _clean_title(rec.get("display", ""))
+                    if title:
+                        titles[sid] = title
     except OSError:
         pass
-    return mapping
+    return paths, titles
+
+
+def _codex_title_map() -> dict[str, str]:
+    """Map session_id -> first prompt text, from ~/.codex/history.jsonl."""
+    titles: dict[str, str] = {}
+    try:
+        with CODEX_HISTORY.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                sid = rec.get("session_id")
+                if sid and sid not in titles:
+                    title = _clean_title(rec.get("text", ""))
+                    if title:
+                        titles[sid] = title
+    except OSError:
+        pass
+    return titles
 
 
 def scan_claude() -> list[Project]:
     projects: list[Project] = []
     if not CLAUDE_PROJECTS.is_dir():
         return projects
-    history_map = _history_path_map()
+    history_map, title_map = _claude_history_maps()
 
     for proj_dir in sorted(p for p in CLAUDE_PROJECTS.iterdir() if p.is_dir()):
         sessions: list[Session] = []
@@ -122,6 +194,7 @@ def scan_claude() -> list[Project]:
                     extra_paths=extra,
                     last_used=jsonl.stat().st_mtime,
                     size_bytes=size,
+                    title=_claude_title_from_session(jsonl) or title_map.get(sid, ""),
                 )
             )
 
@@ -174,6 +247,7 @@ def _codex_session_meta(jsonl: Path) -> tuple[str | None, str | None]:
 def scan_codex() -> list[Project]:
     if not CODEX_SESSIONS.is_dir():
         return []
+    title_map = _codex_title_map()
     groups: dict[str | None, list[Session]] = {}
     for jsonl in sorted(CODEX_SESSIONS.rglob("rollout-*.jsonl")):
         cwd, sid = _codex_session_meta(jsonl)
@@ -185,6 +259,7 @@ def scan_codex() -> list[Project]:
                 file=jsonl,
                 last_used=st.st_mtime,
                 size_bytes=st.st_size,
+                title=title_map.get(sid or "", ""),
             )
         )
     return [

@@ -22,6 +22,11 @@ class Session:
     extra_paths: list[Path] = field(default_factory=list)  # e.g. Claude <uuid>/ sidecar dir
     last_used: float = 0.0  # epoch seconds
     size_bytes: int = 0
+    title: str = ""  # first user prompt / thread name, if resolvable
+
+    @property
+    def display_name(self) -> str:
+        return self.title or self.session_id
 
     @property
     def all_paths(self) -> list[Path]:

@@ -217,7 +217,7 @@ class App(tk.Tk):
             self.items[pid] = ("project", proj)
             for sess in sorted(proj.sessions, key=lambda s: s.last_used, reverse=True):
                 sid = self.tree.insert(
-                    pid, "end", text=sess.session_id,
+                    pid, "end", text=sess.display_name,
                     values=(
                         SOURCE_LABELS[sess.source], "", "",
                         human_size(sess.size_bytes),

@@ -81,8 +81,27 @@ def _claude_cwd_from_session(jsonl: Path) -> str | None:
     return None
 
 
+def _title_from_record(rec: dict) -> str:
+    """A session-name record, if this is one: custom-title (user rename),
+    ai-title (auto-generated), or summary."""
+    t = rec.get("type")
+    if t == "custom-title":
+        return " ".join(str(rec.get("customTitle", "")).split())[:_TITLE_MAX_LEN]
+    if t == "ai-title":
+        return " ".join(str(rec.get("aiTitle", "")).split())[:_TITLE_MAX_LEN]
+    if t == "summary":
+        return " ".join(str(rec.get("summary", "")).split())[:_TITLE_MAX_LEN]
+    return ""
+
+
 def _claude_title_from_session(jsonl: Path) -> str:
-    """First real user prompt from the leading records of a Claude session file."""
+    """Session name from a Claude session file.
+
+    Preference order: custom-title (user rename) > ai-title (auto-generated)
+    > summary > first real user prompt. Name records usually sit in the header,
+    but a rename can be appended later, so the tail is checked too.
+    """
+    custom = ai = summary = prompt = ""
     try:
         with jsonl.open("r", encoding="utf-8", errors="replace") as f:
             for _ in range(_TITLE_SCAN_LINES):
@@ -93,25 +112,52 @@ def _claude_title_from_session(jsonl: Path) -> str:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if rec.get("type") != "user" or rec.get("isMeta") or rec.get("isSidechain"):
-                    continue
-                content = rec.get("message", {}).get("content")
-                if isinstance(content, str):
-                    text = content
-                elif isinstance(content, list):
-                    text = " ".join(
-                        part.get("text", "")
-                        for part in content
-                        if isinstance(part, dict) and part.get("type") == "text"
-                    )
-                else:
-                    continue
-                title = _clean_title(text)
-                if title:
-                    return title
+                t = rec.get("type")
+                if t == "custom-title":
+                    custom = custom or _title_from_record(rec)
+                elif t == "ai-title":
+                    ai = ai or _title_from_record(rec)
+                elif t == "summary":
+                    summary = summary or _title_from_record(rec)
+                elif (
+                    not prompt
+                    and t == "user"
+                    and not rec.get("isMeta")
+                    and not rec.get("isSidechain")
+                ):
+                    content = rec.get("message", {}).get("content")
+                    if isinstance(content, str):
+                        text = content
+                    elif isinstance(content, list):
+                        text = " ".join(
+                            part.get("text", "")
+                            for part in content
+                            if isinstance(part, dict) and part.get("type") == "text"
+                        )
+                    else:
+                        continue
+                    prompt = _clean_title(text)
+                if custom:
+                    return custom
+            if not (custom or ai):
+                # A rename mid-session appends the record; check the file tail.
+                f.seek(0, os.SEEK_END)
+                size = f.tell()
+                f.seek(max(0, size - 65536))
+                for line in f.readlines()[1:]:
+                    if '"custom-title"' not in line and '"ai-title"' not in line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if rec.get("type") == "custom-title":
+                        custom = _title_from_record(rec)
+                    elif rec.get("type") == "ai-title":
+                        ai = _title_from_record(rec)
     except OSError:
         pass
-    return ""
+    return custom or ai or summary or prompt
 
 
 def _claude_history_maps() -> tuple[dict[str, str], dict[str, str]]:

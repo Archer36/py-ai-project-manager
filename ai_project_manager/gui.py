@@ -100,7 +100,11 @@ class App(tk.Tk):
         actions.pack(fill="x")
         ttk.Button(actions, text="Refresh", command=self.refresh).pack(side="left", padx=(0, 4))
         ttk.Button(actions, text="Select All (Filtered)", command=self.select_all_filtered).pack(side="left", padx=4)
-        ttk.Button(actions, text="Reveal in Finder", command=self.reveal_selected).pack(side="left", padx=4)
+        reveal_label = {
+            "darwin": "Reveal in Finder",
+            "win32": "Show in Explorer",
+        }.get(sys.platform, "Show in File Manager")
+        ttk.Button(actions, text=reveal_label, command=self.reveal_selected).pack(side="left", padx=4)
         ttk.Button(actions, text="Delete Selected", command=self.delete_selected).pack(side="right")
 
         for var in (self.source_var, self.status_var, self.age_var, self.search_var):

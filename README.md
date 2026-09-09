@@ -26,7 +26,13 @@ Requires a Python with a modern Tk (8.6+). Avoid Apple's built-in `/usr/bin/pyth
 
 ### Windows
 
-Install Python from [python.org](https://www.python.org/downloads/) (tkinter is included), clone the repo, and run the same `python -m ai_project_manager` commands below. Deletions go to the Recycle Bin.
+Install Python from [python.org](https://www.python.org/downloads/) (tkinter is included), clone the repo, and run it with the `py` launcher — on a fresh Windows install, `python`/`python3` are Microsoft Store aliases that do nothing:
+
+```powershell
+py -m ai_project_manager
+```
+
+Deletions go to the Recycle Bin.
 
 ### From a fresh macOS install
 

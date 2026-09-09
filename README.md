@@ -2,6 +2,8 @@
 
 A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash or Windows Recycle Bin.
 
+> **What "delete" means here:** deleting only removes the *stored conversation data* inside `~/.claude` / `~/.codex` (session transcripts, per-project memory). It never touches your actual project folder or its code — cleaning up a "missing" project just removes the leftover session history for a folder you already deleted yourself.
+
 ![AI Project Manager on macOS showing Claude and Codex projects with session names and missing-folder status](docs/mac.png)
 
 ![AI Project Manager on Windows](docs/windows.png)
@@ -11,7 +13,7 @@ A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Cod
 - Unified view of Claude Code and Codex projects with per-project session counts, sizes, and last-used dates
 - Status per project: `✓ exists`, `✗ missing` (folder is gone), `☁ unavailable` (OneDrive/CloudStorage path not currently synced), `? unresolved`
 - Filters: source (Claude/Codex), status, "older than N days", and path search — combine with **Select All (Filtered)** for bulk cleanup (e.g. filter to *Missing only* → select all → delete)
-- Expand a project to delete individual sessions
+- Expand a project to delete individual sessions (session data only — project folders are never deleted)
 - Deletions go to the **macOS Trash** via Finder (with "Put Back" support; falls back to moving into `~/.Trash` if Finder automation is denied) or the **Windows Recycle Bin** via the shell API
 - Open the project's source folder, or jump straight to its stored session files (~/.claude / ~/.codex), in Finder/Explorer
 

@@ -102,7 +102,12 @@ class App(tk.Tk):
         ttk.Button(actions, text="Select All (Filtered)", command=self.select_all_filtered).pack(side="left", padx=4)
         ttk.Button(actions, text="Open Project Folder", command=self.open_project_folder).pack(side="left", padx=4)
         ttk.Button(actions, text="Show Session Files", command=self.show_session_files).pack(side="left", padx=4)
-        ttk.Button(actions, text="Delete Selected", command=self.delete_selected).pack(side="right")
+        ttk.Button(actions, text="Delete Session Data", command=self.delete_selected).pack(side="right")
+        ttk.Label(
+            actions,
+            text="Deletes only Claude/Codex session data — never your project folder.",
+            foreground="#757575",
+        ).pack(side="right", padx=8)
 
         for var in (self.source_var, self.status_var, self.age_var, self.search_var):
             var.trace_add("write", lambda *_: self.rebuild_tree())
@@ -319,10 +324,10 @@ class App(tk.Tk):
         if not paths:
             return
 
-        lines = [f"Move to Trash: {len(selected_projects)} project(s), "
+        lines = [f"Move session data to Trash: {len(selected_projects)} project(s), "
                  f"{len(selected_sessions)} session(s) — {human_size(total)}", ""]
         for proj in selected_projects[:8]:
-            lines.append(f"• {SOURCE_LABELS[proj.source]} project: {proj.display_path}")
+            lines.append(f"• {SOURCE_LABELS[proj.source]} session data for: {proj.display_path}")
         if len(selected_projects) > 8:
             lines.append(f"• … and {len(selected_projects) - 8} more projects")
         for proj, sess in selected_sessions[:8]:
@@ -332,7 +337,13 @@ class App(tk.Tk):
         if memory_warning:
             lines += ["", "⚠ One or more Claude projects contain a memory/ folder "
                           "(Claude's saved project memory). It will be trashed too."]
-        lines += ["", "Items go to the macOS Trash and can be restored."]
+        lines += [
+            "",
+            "Only stored Claude/Codex conversation data is removed —",
+            "your actual project folders are NOT touched.",
+            "",
+            "Items go to the Trash and can be restored.",
+        ]
 
         if not messagebox.askyesno("Confirm delete", "\n".join(lines), icon="warning"):
             return

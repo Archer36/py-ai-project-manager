@@ -1,0 +1,68 @@
+name: Build executables
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build
+        run: pyinstaller --onefile --windowed --name AIProjectManager run.py
+
+      - name: Smoke test (text mode)
+        run: python run.py --list
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIProjectManager-windows
+          path: dist/AIProjectManager.exe
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AIProjectManager.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build
+        run: pyinstaller --onefile --windowed --name AIProjectManager run.py
+
+      - name: Zip app bundle
+        run: cd dist && zip -r AIProjectManager-macos.zip "AIProjectManager.app"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AIProjectManager-macos
+          path: dist/AIProjectManager-macos.zip
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/AIProjectManager-macos.zip

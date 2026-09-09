@@ -22,6 +22,12 @@ A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Cod
 
 ## Installation
 
+### Prebuilt executables (no Python required)
+
+Tagged releases include a standalone `AIProjectManager.exe` (Windows) and `AIProjectManager-macos.zip` (macOS) built by GitHub Actions — download from the [Releases page](https://github.com/Archer36/py-ai-project-manager/releases) and run; no Python install and no admin rights needed. Because the binaries are unsigned, Windows SmartScreen shows "Windows protected your PC" (click **More info → Run anyway**) and macOS Gatekeeper requires right-click → **Open** the first time.
+
+### Running from source
+
 Requires a Python with a modern Tk (8.6+). Avoid Apple's built-in `/usr/bin/python3` — its bundled Tk 8.5 draws a blank window on recent macOS in dark mode.
 
 ### Windows

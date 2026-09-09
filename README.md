@@ -11,7 +11,7 @@ A zero-dependency Tkinter GUI for macOS and Windows that lists your **Claude Cod
 - Filters: source (Claude/Codex), status, "older than N days", and path search — combine with **Select All (Filtered)** for bulk cleanup (e.g. filter to *Missing only* → select all → delete)
 - Expand a project to delete individual sessions
 - Deletions go to the **macOS Trash** via Finder (with "Put Back" support; falls back to moving into `~/.Trash` if Finder automation is denied) or the **Windows Recycle Bin** via the shell API
-- Reveal a project or session file in Finder
+- Open the project's source folder, or jump straight to its stored session files (~/.claude / ~/.codex), in Finder/Explorer
 
 ## Correctness notes
 

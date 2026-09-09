@@ -100,11 +100,8 @@ class App(tk.Tk):
         actions.pack(fill="x")
         ttk.Button(actions, text="Refresh", command=self.refresh).pack(side="left", padx=(0, 4))
         ttk.Button(actions, text="Select All (Filtered)", command=self.select_all_filtered).pack(side="left", padx=4)
-        reveal_label = {
-            "darwin": "Reveal in Finder",
-            "win32": "Show in Explorer",
-        }.get(sys.platform, "Show in File Manager")
-        ttk.Button(actions, text=reveal_label, command=self.reveal_selected).pack(side="left", padx=4)
+        ttk.Button(actions, text="Open Project Folder", command=self.open_project_folder).pack(side="left", padx=4)
+        ttk.Button(actions, text="Show Session Files", command=self.show_session_files).pack(side="left", padx=4)
         ttk.Button(actions, text="Delete Selected", command=self.delete_selected).pack(side="right")
 
         for var in (self.source_var, self.status_var, self.age_var, self.search_var):
@@ -247,20 +244,8 @@ class App(tk.Tk):
         project_rows = self.tree.get_children("")
         self.tree.selection_set(project_rows)
 
-    def reveal_selected(self) -> None:
-        sel = self.tree.selection()
-        if not sel:
-            return
-        kind, *rest = self.items[sel[0]]
-        if kind == "project":
-            proj: Project = rest[0]
-            target = proj.real_path if proj.real_path and Status.OK is proj.status else proj.store_path
-            if target is None and proj.sessions:
-                target = proj.sessions[0].file
-        else:
-            target = rest[1].file
-        if not target:
-            return
+    def _reveal(self, target) -> None:
+        """Show the given path in the OS file manager."""
         if sys.platform == "darwin":
             subprocess.run(["open", "-R", str(target)], check=False)
         elif sys.platform == "win32":
@@ -268,6 +253,36 @@ class App(tk.Tk):
         else:
             parent = target if Path(target).is_dir() else Path(target).parent
             subprocess.run(["xdg-open", str(parent)], check=False)
+
+    def open_project_folder(self) -> None:
+        """Reveal the project's source folder (the directory Claude/Codex ran in)."""
+        sel = self.tree.selection()
+        if not sel:
+            return
+        kind, *rest = self.items[sel[0]]
+        proj: Project = rest[0]
+        if not proj.real_path or proj.status is not Status.OK:
+            messagebox.showinfo(
+                "Folder unavailable",
+                f"The project folder does not exist:\n{proj.display_path}",
+            )
+            return
+        self._reveal(proj.real_path)
+
+    def show_session_files(self) -> None:
+        """Reveal the stored session data (~/.claude / ~/.codex) for the selection."""
+        sel = self.tree.selection()
+        if not sel:
+            return
+        kind, *rest = self.items[sel[0]]
+        if kind == "session":
+            self._reveal(rest[1].file)
+            return
+        proj: Project = rest[0]
+        if proj.store_path is not None:
+            self._reveal(proj.store_path)
+        elif proj.sessions:
+            self._reveal(proj.sessions[0].file)
 
     def delete_selected(self) -> None:
         sel = self.tree.selection()

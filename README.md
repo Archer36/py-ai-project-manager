@@ -2,6 +2,8 @@
 
 A zero-dependency Tkinter GUI for macOS that lists your **Claude Code** (`~/.claude/projects`) and **Codex** (`~/.codex/sessions`) projects and sessions, shows whether each project's source folder still exists, and lets you clean up old data by moving it to the macOS Trash.
 
+![AI Project Manager showing Claude and Codex projects with session names and missing-folder status](docs/screenshot.png)
+
 ## Features
 
 - Unified view of Claude Code and Codex projects with per-project session counts, sizes, and last-used dates

@@ -324,14 +324,24 @@ class App(tk.Tk):
         if not paths:
             return
 
-        lines = [f"Move session data to Trash: {len(selected_projects)} project(s), "
-                 f"{len(selected_sessions)} session(s) — {human_size(total)}", ""]
+        parts = []
+        if selected_projects:
+            proj_sessions = sum(len(p.sessions) for p in selected_projects)
+            parts.append(
+                f"{len(selected_projects)} project(s) including their {proj_sessions} session(s)"
+            )
+        if selected_sessions:
+            parts.append(f"{len(selected_sessions)} individual session(s)")
+        lines = [f"Move session data to Trash: {' plus '.join(parts)} — {human_size(total)}", ""]
         for proj in selected_projects[:8]:
-            lines.append(f"• {SOURCE_LABELS[proj.source]} session data for: {proj.display_path}")
+            lines.append(
+                f"• {SOURCE_LABELS[proj.source]} session data for: {proj.display_path}"
+                f" ({len(proj.sessions)} sessions)"
+            )
         if len(selected_projects) > 8:
             lines.append(f"• … and {len(selected_projects) - 8} more projects")
         for proj, sess in selected_sessions[:8]:
-            lines.append(f"• session {sess.session_id[:13]}… ({proj.display_path})")
+            lines.append(f"• session “{sess.display_name[:40]}” ({proj.display_path})")
         if len(selected_sessions) > 8:
             lines.append(f"• … and {len(selected_sessions) - 8} more sessions")
         if memory_warning:

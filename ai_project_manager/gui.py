@@ -34,6 +34,7 @@ class App(tk.Tk):
         super().__init__()
         self.title("AI Project Manager")
         self.geometry("1050x650")
+        self.minsize(760, 400)
 
         self.projects: list[Project] = []
         # tree item id -> ("project", Project) | ("session", Project, Session)
@@ -91,12 +92,14 @@ class App(tk.Tk):
         ttk.Label(bar, text="Search:").pack(side="left")
         self.search_var = tk.StringVar()
         search = ttk.Entry(bar, textvariable=self.search_var, width=18)
-        search.pack(side="left", padx=(2, 10))
+        search.pack(side="left", padx=(2, 10), fill="x", expand=True)
 
-        ttk.Button(bar, text="Delete Selected", command=self.delete_selected).pack(side="right", padx=2)
-        ttk.Button(bar, text="Reveal in Finder", command=self.reveal_selected).pack(side="right", padx=2)
-        ttk.Button(bar, text="Select All (Filtered)", command=self.select_all_filtered).pack(side="right", padx=2)
-        ttk.Button(bar, text="Refresh", command=self.refresh).pack(side="right", padx=2)
+        actions = ttk.Frame(self, padding=(8, 0, 8, 6))
+        actions.pack(fill="x")
+        ttk.Button(actions, text="Refresh", command=self.refresh).pack(side="left", padx=(0, 4))
+        ttk.Button(actions, text="Select All (Filtered)", command=self.select_all_filtered).pack(side="left", padx=4)
+        ttk.Button(actions, text="Reveal in Finder", command=self.reveal_selected).pack(side="left", padx=4)
+        ttk.Button(actions, text="Delete Selected", command=self.delete_selected).pack(side="right")
 
         for var in (self.source_var, self.status_var, self.age_var, self.search_var):
             var.trace_add("write", lambda *_: self.rebuild_tree())

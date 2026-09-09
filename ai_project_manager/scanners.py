@@ -12,6 +12,7 @@ CLAUDE_PROJECTS = Path.home() / ".claude" / "projects"
 CLAUDE_HISTORY = Path.home() / ".claude" / "history.jsonl"
 CODEX_SESSIONS = Path.home() / ".codex" / "sessions"
 CODEX_HISTORY = Path.home() / ".codex" / "history.jsonl"
+CODEX_SESSION_INDEX = Path.home() / ".codex" / "session_index.jsonl"
 
 # How many leading lines of a Claude session file to scan for a "cwd" field
 # (the first records are headers carrying only type/sessionId).
@@ -186,7 +187,9 @@ def _claude_history_maps() -> tuple[dict[str, str], dict[str, str]]:
 
 
 def _codex_title_map() -> dict[str, str]:
-    """Map session_id -> first prompt text, from ~/.codex/history.jsonl."""
+    """Map session_id -> name: thread_name from ~/.codex/session_index.jsonl
+    (set when the user names/renames a thread), falling back to the first
+    prompt from ~/.codex/history.jsonl."""
     titles: dict[str, str] = {}
     try:
         with CODEX_HISTORY.open("r", encoding="utf-8", errors="replace") as f:
@@ -200,6 +203,20 @@ def _codex_title_map() -> dict[str, str]:
                     title = _clean_title(rec.get("text", ""))
                     if title:
                         titles[sid] = title
+    except OSError:
+        pass
+    try:
+        with CODEX_SESSION_INDEX.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                sid = rec.get("id")
+                name = " ".join(str(rec.get("thread_name") or "").split())
+                if sid and name:
+                    # The index is chronological; the last entry for an id wins.
+                    titles[sid] = name[:_TITLE_MAX_LEN]
     except OSError:
         pass
     return titles
